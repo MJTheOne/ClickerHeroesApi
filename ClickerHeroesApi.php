@@ -92,9 +92,28 @@
 		 **/
 		public function decrypt($val) {
 			$this->encrypted = $val;
-			$this->findDelimiter();//->hackIt();
+			$this->findDelimiter()->hackIt();
 
 			return $this->decrypted;
+		}
+
+		public function hackIt() {
+			$result = explode($this->delimiter, $this->encrypted);
+
+			foreach($this->knownSalts as $salt) {
+				$check = '';
+				for($i = 0; $i < strlen($result[0]); $i +=2) {
+					$check .= $result[0][$i];
+				}
+
+				$hash = md5($check . $salt->val);
+				if($hash == $result[1]) {
+					$this->salt = $salt;
+					$this->decrypted = json_decode(base64_decode($check));
+
+					return $this;
+				}
+			}
 		}
 
 		/**
@@ -105,10 +124,13 @@
 		public function findDelimiter() {
 			$this->delimiter = substr($this->encrypted, strlen($this->encrypted) - 48, 16);
 
-			if(!in_array($this->getStaticData('delimiter'))) {
-				// save it in json
-			} else {
-				return $this;
+			foreach($this->knownDelimiters as $delim) {
+				if(!in_array($delim->val, $this->knownDelimiters)) {
+					// save it in json
+					break;
+				}
 			}
+
+			return $this;
 		}
 	}
