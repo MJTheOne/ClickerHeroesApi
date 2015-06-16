@@ -102,6 +102,7 @@
 
 			foreach($this->knownSalts as $salt) {
 				$check = '';
+				// Needed because of the 'Sprinkle' function (adding random characters to the hash)
 				for($i = 0; $i < strlen($result[0]); $i +=2) {
 					$check .= $result[0][$i];
 				}
@@ -119,14 +120,26 @@
 		/**
 		 *	Find current delimiter
 		 *	If it's new save it for future use
-		 *
 		 **/
 		public function findDelimiter() {
+			// The delimiter is at a set position at the end of the file
 			$this->delimiter = substr($this->encrypted, strlen($this->encrypted) - 48, 16);
 
+			// If the delimiter is unknown add it to the delimiter JSON file for later use
 			foreach($this->knownDelimiters as $delim) {
 				if(!in_array($delim->val, $this->knownDelimiters)) {
-					// save it in json
+					$data 		= array(
+						"version" 	=> "", // get version?
+						"val"		=> $this->delimiter
+					);
+
+					$inp 		= file_get_contents(__DIR__ . '/statics/delimiters.json');
+					$tempArray 	= json_decode($inp);
+
+					array_push($tempArray, $data);
+					$jsonData 	= json_encode($tempArray);
+					file_put_contents(__DIR__ . '/statics/delimiters.json', $jsonData);
+					
 					break;
 				}
 			}
